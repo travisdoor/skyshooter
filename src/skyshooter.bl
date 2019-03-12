@@ -5,9 +5,9 @@
 #load "common.bl"
 #load "entity.bl"
 
-ScreenWidth  :: 1920;
-ScreenHeight :: 1080;
-Fullscreen   :: true;
+ScreenWidth  :: 800;
+ScreenHeight :: 600;
+Fullscreen   :: false;
 MsPerFrame   :: 16;
 
 Game :: struct {

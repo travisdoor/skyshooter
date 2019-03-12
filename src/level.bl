@@ -94,22 +94,22 @@ level_layer_delete :: fn (self: *LevelLayer) {
 };
 
 level_layer_render :: fn (self: *LevelLayer, game: *Game) {
-  if self.x_position < -800.f { self.x_position = 0.f; }
   ipos := cast(s32) self.x_position;
 
   dst_rect := {:SDL_Rect:
     ipos,
     0,
-    800,
-    600
+    ScreenWidth,
+    ScreenHeight
   };
 
   SDL_RenderCopy(game.renderer, self.texture, null, &dst_rect);
 
-  dst_rect.x += 800;
+  dst_rect.x += ScreenWidth;
   SDL_RenderCopy(game.renderer, self.texture, null, &dst_rect);
 };
 
 level_layer_update :: fn (self: *LevelLayer) {
   self.x_position += self.x_speed;
+  if self.x_position < -(cast(f32) ScreenWidth) { self.x_position = 0.f; }
 };

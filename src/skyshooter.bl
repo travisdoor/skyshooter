@@ -5,8 +5,9 @@
 #load "common.bl"
 #load "entity.bl"
 
-ScreenWidth  :: 800;
-ScreenHeight :: 600;
+ScreenWidth  :: 1920;
+ScreenHeight :: 1080;
+Fullscreen   :: true;
 MsPerFrame   :: 16;
 
 Game :: struct {
@@ -38,13 +39,16 @@ init :: fn (game: *Game) {
   }
 
   title := "Sky Shooter!!!";
+  flags := SDL_WINDOW_SHOWN;
+  if Fullscreen { flags = flags | SDL_WINDOW_FULLSCREEN; }
+
   game.window = SDL_CreateWindow(
     title.ptr,
     100,
     100,
     ScreenWidth,
     ScreenHeight,
-    SDL_WINDOW_SHOWN
+    flags
   );
 
   if game.window == null {

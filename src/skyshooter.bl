@@ -1,5 +1,3 @@
-/* playground */
-
 #load "std/core.bl"
 #load "std/math.bl"
 #load "sdl2/sdl2.bl"
@@ -9,6 +7,7 @@
 
 ScreenWidth  :: 800;
 ScreenHeight :: 600;
+MsPerFrame   :: 16;
 
 Game :: struct {
   window: *SDL_Window,
@@ -76,10 +75,18 @@ terminate :: fn (game: *Game) {
 
 game_loop :: fn (game: *Game) {
   loop !game.will_quit {
-    handle_input(game);
-    update(game);
-    render(game);
-    SDL_Delay(16);
+    start := SDL_GetTicks(); 
+
+    {
+      handle_input(game);
+      update(game);
+      render(game);
+    }
+    
+    current := SDL_GetTicks();
+    if start + MsPerFrame > current {
+      SDL_Delay(start + MsPerFrame - current);
+    }
   }
 };
 

@@ -9,3 +9,7 @@ load_surface :: fn (filepath: string) *SDL_Surface {
 
   return surface;
 };
+
+get_ticks_ms :: fn () f64 {
+  return cast(f64) SDL_GetTicks();
+};

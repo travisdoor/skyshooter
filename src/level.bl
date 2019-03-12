@@ -1,26 +1,28 @@
-LEVEL_LAYER_SKY    :: 0;
-LEVEL_LAYER_HILLS  :: 1;
-LEVEL_LAYER_CLOUDS :: 2;
+LEVEL_LAYER_SKY     :: 0;
+LEVEL_LAYER_HILLS1  :: 1;
+LEVEL_LAYER_CLOUDS1 :: 2;
+LEVEL_LAYER_HILLS2  :: 3;
+LEVEL_LAYER_CLOUDS2 :: 4;
 
 Level :: struct {
-   layers: [3]*SDL_Texture, 
+   layers: [5]*LevelLayer,
    player: *Entity
+};
+
+LevelLayer :: struct {
+  texture: *SDL_Texture,
+  x_position: f32,
+  x_speed: f32
 };
 
 level_new :: fn (game: *Game) *Level {
   self := cast(*Level) malloc(sizeof(Level));
 
-  surface := load_surface("data/sky.png");
-  self.layers[0] = SDL_CreateTextureFromSurface(game.renderer, surface);
-  SDL_FreeSurface(surface);
-
-  surface = load_surface("data/rocks_2.png");
-  self.layers[1] = SDL_CreateTextureFromSurface(game.renderer, surface);
-  SDL_FreeSurface(surface);
-
-  surface = load_surface("data/clouds_2.png");
-  self.layers[2] = SDL_CreateTextureFromSurface(game.renderer, surface);
-  SDL_FreeSurface(surface);
+  self.layers[LEVEL_LAYER_SKY] = level_layer_new(game, "data/sky.png", 0.f);
+  self.layers[LEVEL_LAYER_HILLS1] = level_layer_new(game, "data/rocks_1.png", -0.6f);
+  self.layers[LEVEL_LAYER_CLOUDS1] = level_layer_new(game, "data/clouds_2.png", -0.7f);
+  self.layers[LEVEL_LAYER_HILLS2] = level_layer_new(game, "data/rocks_2.png", -0.8f);
+  self.layers[LEVEL_LAYER_CLOUDS2] = level_layer_new(game, "data/clouds_1.png", -0.9f);
 
   // init player
   tmp := {:Vec2: 50.f, 200.f};
@@ -31,7 +33,7 @@ level_new :: fn (game: *Game) *Level {
 
 level_delete :: fn (self: *Level) {
   loop i := 0; i < self.layers.len; i += 1 {
-    SDL_DestroyTexture(self.layers[i]);
+    level_layer_delete(self.layers[i]);
   }
 
   entity_delete(self.player);
@@ -39,35 +41,75 @@ level_delete :: fn (self: *Level) {
 };
 
 level_render :: fn (self: *Level, game: *Game) {
-  dst_rect := {:SDL_Rect: 0, 0, 800, 600};
-  src_rect : *SDL_Rect = null;
-
-  SDL_RenderCopy(game.renderer, self.layers[LEVEL_LAYER_SKY], src_rect, &dst_rect);
-  SDL_RenderCopy(game.renderer, self.layers[LEVEL_LAYER_HILLS], src_rect, &dst_rect);
+  level_layer_render(self.layers[LEVEL_LAYER_SKY], game);
+  level_layer_render(self.layers[LEVEL_LAYER_HILLS1], game);
+  level_layer_render(self.layers[LEVEL_LAYER_CLOUDS1], game);
+  level_layer_render(self.layers[LEVEL_LAYER_HILLS2], game);
 
   entity_render(self.player, game);
 
-  SDL_RenderCopy(game.renderer, self.layers[LEVEL_LAYER_CLOUDS], src_rect, &dst_rect);
+  level_layer_render(self.layers[LEVEL_LAYER_CLOUDS2], game);
 };
 
 level_update :: fn (self: *Level) {
   entity_update(self.player);
+
+  loop i := 0; i < self.layers.len; i += 1 {
+    level_layer_update(self.layers[i]);
+  }
 };
 
 level_handle_input :: fn (self: *Level) {
   if SDL_KeyPressed(SDL_SCANCODE_A) {
-    self.player.speed.x -= 0.5f;
+    self.player.speed.x -= 0.2f;
   }
 
   if SDL_KeyPressed(SDL_SCANCODE_S) {
-    self.player.speed.y += 0.5f;
+    self.player.speed.y += 0.2f;
   }
 
   if SDL_KeyPressed(SDL_SCANCODE_D) {
-    self.player.speed.x += 0.5f;
+    self.player.speed.x += 0.2f;
   }
 
   if SDL_KeyPressed(SDL_SCANCODE_W) {
-    self.player.speed.y -= 0.5f;
+    self.player.speed.y -= 0.2f;
   }
+};
+
+level_layer_new :: fn (game: *Game, filename: string, x_speed: f32) *LevelLayer {
+  self := cast(*LevelLayer) malloc(sizeof(LevelLayer)); 
+  surface := load_surface(filename);
+  self.texture = SDL_CreateTextureFromSurface(game.renderer, surface);
+  SDL_FreeSurface(surface);
+
+  self.x_position = 0.f;
+  self.x_speed = x_speed;
+  return self;
+};
+
+level_layer_delete :: fn (self: *LevelLayer) {
+  SDL_DestroyTexture(self.texture);
+  free(cast(*u8) self);
+};
+
+level_layer_render :: fn (self: *LevelLayer, game: *Game) {
+  if self.x_position < -800.f { self.x_position = 0.f; }
+  ipos := cast(s32) self.x_position;
+
+  dst_rect := {:SDL_Rect:
+    ipos,
+    0,
+    800,
+    600
+  };
+
+  SDL_RenderCopy(game.renderer, self.texture, null, &dst_rect);
+
+  dst_rect.x += 800;
+  SDL_RenderCopy(game.renderer, self.texture, null, &dst_rect);
+};
+
+level_layer_update :: fn (self: *LevelLayer) {
+  self.x_position += self.x_speed;
 };

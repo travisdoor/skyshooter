@@ -5,6 +5,7 @@
 #load "common.bl"
 #load "entity.bl"
 
+Title        := "Sky Shooter!!!";
 ScreenWidth  :: 800;
 ScreenHeight :: 600;
 Fullscreen   :: false;
@@ -38,13 +39,12 @@ init :: fn (game: *Game) {
     print("SDL initialized.\n");
   }
 
-  title := "Sky Shooter!!!";
   flags := SDL_WINDOW_SHOWN;
 
   if Fullscreen { flags = flags | SDL_WINDOW_FULLSCREEN; }
 
   game.window = SDL_CreateWindow(
-    title.ptr,
+    Title.ptr,
     100,
     100,
     ScreenWidth,

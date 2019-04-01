@@ -1,15 +1,15 @@
 #load "sdl2/sdl2_image.bl"
 
 load_surface :: fn (filepath: string) *SDL_Surface {
-  surface := IMG_Load(filepath.ptr);
-  if surface == null {
-    print("Cannot load image.\n");
-    abort();
-  }
+    surface := IMG_Load(filepath.ptr);
+    if surface == null {
+        print("Cannot load image.\n");
+        abort();
+    }
 
-  return surface;
+    return surface;
 };
 
 get_ticks_ms :: fn () f64 {
-  return cast(f64) SDL_GetTicks();
+    return cast(f64) SDL_GetTicks();
 };

@@ -12,109 +12,109 @@ Fullscreen   :: false;
 MsPerFrame   :: 16;
 
 Game :: struct {
-  window: *SDL_Window,
-  renderer: *SDL_Renderer,
-  will_quit: bool,
+    window: *SDL_Window,
+    renderer: *SDL_Renderer,
+    will_quit: bool,
 
-  level: *Level
+    level: *Level
 };
 
 main :: fn () s32 {
-  game: Game;
+    game: Game;
 
-  init(&game);
-  game_loop(&game);
-  terminate(&game);
+    init(&game);
+    game_loop(&game);
+    terminate(&game);
 
-  return 0;
+    return 0;
 };
 
 init :: fn (game: *Game) {
-  print("Initialize SDL.\n");
+    print("Initialize SDL.\n");
 
-  if SDL_Init(SDL_INIT_VIDEO) != 0 {
-    print("Unable to init SDL\n");
-    abort();
-  } else {
-    print("SDL initialized.\n");
-  }
+    if SDL_Init(SDL_INIT_VIDEO) != 0 {
+        print("Unable to init SDL\n");
+        abort();
+    } else {
+        print("SDL initialized.\n");
+    }
 
-  flags := SDL_WINDOW_SHOWN;
+    flags := SDL_WINDOW_SHOWN;
 
-  if Fullscreen { flags = flags | SDL_WINDOW_FULLSCREEN; }
+    if Fullscreen { flags = flags | SDL_WINDOW_FULLSCREEN; }
 
-  game.window = SDL_CreateWindow(
-    Title.ptr,
-    100,
-    100,
-    ScreenWidth,
-    ScreenHeight,
-    flags
-  );
+    game.window = SDL_CreateWindow(
+        Title.ptr,
+        100,
+        100,
+        ScreenWidth,
+        ScreenHeight,
+        flags
+    );
 
-  if game.window == null {
-    print("Cannot create window.\n");
-    abort();
-  }
+    if game.window == null {
+        print("Cannot create window.\n");
+        abort();
+    }
 
-  game.renderer = SDL_CreateRenderer(game.window, -1, SDL_RENDERER_ACCELERATED);
-  if game.renderer == null {
-    print("Cannot create renderer.\n");
-    abort();
-  }
-  
-  SDL_SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
-  game.will_quit = false;
+    game.renderer = SDL_CreateRenderer(game.window, -1, SDL_RENDERER_ACCELERATED);
+    if game.renderer == null {
+        print("Cannot create renderer.\n");
+        abort();
+    }
+    
+    SDL_SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
+    game.will_quit = false;
 
-  // init level
-  game.level = level_new(game);
+    // init level
+    game.level = level_new(game);
 };
 
 terminate :: fn (game: *Game) {
-  level_delete(game.level);
-  SDL_DestroyRenderer(game.renderer);
-  SDL_DestroyWindow(game.window);
-  SDL_Quit();
-  print("Exiting.\n");
+    level_delete(game.level);
+    SDL_DestroyRenderer(game.renderer);
+    SDL_DestroyWindow(game.window);
+    SDL_Quit();
+    print("Exiting.\n");
 };
 
 game_loop :: fn (game: *Game) {
-  loop !game.will_quit {
-    start := SDL_GetTicks(); 
+    loop !game.will_quit {
+        start := SDL_GetTicks(); 
 
-    {
-      handle_input(game);
-      update(game);
-      render(game);
+        {
+            handle_input(game);
+            update(game);
+            render(game);
+        }
+        
+        current := SDL_GetTicks();
+        if start + MsPerFrame > current {
+            SDL_Delay(start + MsPerFrame - current);
+        }
     }
-    
-    current := SDL_GetTicks();
-    if start + MsPerFrame > current {
-      SDL_Delay(start + MsPerFrame - current);
-    }
-  }
 };
 
 handle_input :: fn(game: *Game) {
-  event := {:SDL_Event: 0};
+    event := {:SDL_Event: 0};
 
-  level_handle_input(game.level);
+    level_handle_input(game.level);
 
-  loop SDL_PollEvent(&event) != 0 {
-    if event.type == SDL_QUIT {
-      game.will_quit = true;  
+    loop SDL_PollEvent(&event) != 0 {
+        if event.type == cast(u32) SDL_EventType.QUIT {
+            game.will_quit = true;    
+        }
     }
-  }
 };
 
 render :: fn (game: *Game) {
-  SDL_RenderClear(game.renderer);
+    SDL_RenderClear(game.renderer);
 
-  level_render(game.level, game);
+    level_render(game.level, game);
 
-  SDL_RenderPresent(game.renderer);
+    SDL_RenderPresent(game.renderer);
 };
 
 update :: fn (game: *Game) {
-  level_update(game.level);
+    level_update(game.level);
 };

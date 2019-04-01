@@ -1,47 +1,47 @@
 Entity :: struct {
-  texture: *SDL_Texture,
-  position: Vec2,
-  speed: Vec2,
+    texture: *SDL_Texture,
+    position: Vec2,
+    speed: Vec2,
 };
 
 entity_new :: fn (game: *Game, filepath: string, position: *Vec2) *Entity {
-  self := cast(*Entity) malloc(sizeof(Entity));
+    self := cast(*Entity) malloc(sizeof(Entity));
 
-  surface := load_surface(filepath);
-  self.texture = SDL_CreateTextureFromSurface(game.renderer, surface);
-  SDL_FreeSurface(surface);
+    surface := load_surface(filepath);
+    self.texture = SDL_CreateTextureFromSurface(game.renderer, surface);
+    SDL_FreeSurface(surface);
 
-  self.position = ^position;
-  self.speed.x = 0.f;
-  self.speed.y = 0.f;
-  return self;
+    self.position = ^position;
+    self.speed.x = 0.f;
+    self.speed.y = 0.f;
+    return self;
 };
 
 entity_delete :: fn (self: *Entity) {
-  SDL_DestroyTexture(self.texture);
-  free(cast(*u8) self);
+    SDL_DestroyTexture(self.texture);
+    free(cast(*u8) self);
 };
 
 entity_render :: fn (self: *Entity, game: *Game) {
-  dst_rect := {:SDL_Rect:
-    cast(s32) self.position.x,
-    cast(s32) self.position.y,
-    100, 43
-  };
+    dst_rect := {:SDL_Rect:
+        cast(s32) self.position.x,
+        cast(s32) self.position.y,
+        100, 43
+    };
 
-  SDL_RenderCopy(game.renderer, self.texture, null, &dst_rect);
+    SDL_RenderCopy(game.renderer, self.texture, null, &dst_rect);
 };
 
 entity_update :: fn (self: *Entity) {
-  if self.speed.y > 5.f { self.speed.y = 5.f; }
-  if self.speed.y < -5.f { self.speed.y = -5.f; }
+    if self.speed.y > 5.f { self.speed.y = 5.f; }
+    if self.speed.y < -5.f { self.speed.y = -5.f; }
 
-  if self.speed.x > 5.f { self.speed.x = 5.f; }
-  if self.speed.x < -5.f { self.speed.x = -5.f; }
+    if self.speed.x > 5.f { self.speed.x = 5.f; }
+    if self.speed.x < -5.f { self.speed.x = -5.f; }
 
-  self.position.y = self.position.y + self.speed.y;
-  self.position.x = self.position.x + self.speed.x;
-  self.speed.y *= 0.9f;
-  self.speed.x *= 0.9f;
+    self.position.y = self.position.y + self.speed.y;
+    self.position.x = self.position.x + self.speed.x;
+    self.speed.y *= 0.9f;
+    self.speed.x *= 0.9f;
 };
 

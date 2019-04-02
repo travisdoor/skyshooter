@@ -33,11 +33,11 @@ entity_render :: fn (self: *Entity, game: *Game) {
 };
 
 entity_update :: fn (self: *Entity) {
-    if self.speed.y > 5.f { self.speed.y = 5.f; }
-    if self.speed.y < -5.f { self.speed.y = -5.f; }
+    if self.speed.y > 2.f { self.speed.y = 2.f; }
+    if self.speed.y < -2.f { self.speed.y = -2.f; }
 
-    if self.speed.x > 5.f { self.speed.x = 5.f; }
-    if self.speed.x < -5.f { self.speed.x = -5.f; }
+    if self.speed.x > 2.f { self.speed.x = 2.f; }
+    if self.speed.x < -2.f { self.speed.x = -2.f; }
 
     self.position.y = self.position.y + self.speed.y;
     self.position.x = self.position.x + self.speed.x;

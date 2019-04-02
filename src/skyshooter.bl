@@ -9,6 +9,9 @@ Title        := "Sky Shooter!!!";
 ScreenWidth  :: 800;
 ScreenHeight :: 600;
 Fullscreen   :: false;
+FPS          :: 60;
+SkipTicks    :: 1000 / FPS;
+MaxFrameSkip :: 10;
 
 Game :: struct {
     window: *SDL_Window,
@@ -57,8 +60,7 @@ init :: fn (game: *Game) {
     }
 
     game.renderer = SDL_CreateRenderer(game.window, -1,
-                                       SDL_RENDERER_ACCELERATED |
-                                       SDL_RENDERER_PRESENTVSYNC);
+                                       SDL_RENDERER_ACCELERATED);
 
     if game.renderer == null {
         print("Cannot create renderer.\n");
@@ -81,9 +83,20 @@ terminate :: fn (game: *Game) {
 };
 
 game_loop :: fn (game: *Game) {
+    next_game_tick := SDL_GetTicks();
+    loops := 0;
+
     loop !game.will_quit {
         handle_input(game);
-        update(game);
+
+        loops = 0;
+        loop SDL_GetTicks() > next_game_tick && loops < MaxFrameSkip {
+            update(game);
+
+            next_game_tick += SkipTicks;
+            loops += 1;
+        }
+
         render(game);
     }
 };

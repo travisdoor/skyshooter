@@ -3,10 +3,11 @@ LEVEL_LAYER_HILLS1  :: 1;
 LEVEL_LAYER_CLOUDS1 :: 2;
 LEVEL_LAYER_HILLS2  :: 3;
 LEVEL_LAYER_CLOUDS2 :: 4;
+PLAYER_ID           :: cast(usize) 0;
 
 Level :: struct {
-     layers: [5]*LevelLayer,
-     player: *Entity
+    layers: [5]*LevelLayer,
+    entities: [6]*Entity
 };
 
 LevelLayer :: struct {
@@ -19,14 +20,18 @@ level_new :: fn (game: *Game) *Level {
     self := cast(*Level) malloc(sizeof(Level));
 
     self.layers[LEVEL_LAYER_SKY] = level_layer_new(game, "data/sky.png", 0.f);
-    self.layers[LEVEL_LAYER_HILLS1] = level_layer_new(game, "data/rocks_1.png", -0.6f);
-    self.layers[LEVEL_LAYER_CLOUDS1] = level_layer_new(game, "data/clouds_2.png", -0.7f);
-    self.layers[LEVEL_LAYER_HILLS2] = level_layer_new(game, "data/rocks_2.png", -0.8f);
-    self.layers[LEVEL_LAYER_CLOUDS2] = level_layer_new(game, "data/clouds_1.png", -0.9f);
+    self.layers[LEVEL_LAYER_HILLS1] = level_layer_new(game, "data/rocks_1.png", -0.05f);
+    self.layers[LEVEL_LAYER_CLOUDS1] = level_layer_new(game, "data/clouds_2.png", -0.07f);
+    self.layers[LEVEL_LAYER_HILLS2] = level_layer_new(game, "data/rocks_2.png", -0.09f);
+    self.layers[LEVEL_LAYER_CLOUDS2] = level_layer_new(game, "data/clouds_1.png", -0.1f);
 
     // init player
-    tmp := {:Vec2: 50.f, 200.f};
-    self.player = entity_new(game, "data/player.png", &tmp);
+    self.entities[PLAYER_ID] = player_new(game);
+    self.entities[1] = enemy_new(game, 600.f, 20.f, 0.01f);
+    self.entities[2] = enemy_new(game, 800.f, 500.f, 0.008f);
+    self.entities[3] = enemy_new(game, 10.f, 830.f, 0.005f);
+    self.entities[4] = enemy_new(game, 1200.f, 100.f, 0.009f);
+    self.entities[5] = enemy_new(game, 900.f, 760.f, 0.003f);
 
     return self;
 };
@@ -36,7 +41,10 @@ level_delete :: fn (self: *Level) {
         level_layer_delete(self.layers[i]);
     }
 
-    entity_delete(self.player);
+    loop i := 0; i < self.entities.len; i += 1 {
+        entity_delete(self.entities[i]);
+    }
+
     free(cast(*u8) self);
 };
 
@@ -46,34 +54,26 @@ level_render :: fn (self: *Level, game: *Game) {
     level_layer_render(self.layers[LEVEL_LAYER_CLOUDS1], game);
     level_layer_render(self.layers[LEVEL_LAYER_HILLS2], game);
 
-    entity_render(self.player, game);
+    loop i := 0; i < self.entities.len; i += 1 {
+        entity_render(self.entities[i], game);
+    }
 
     level_layer_render(self.layers[LEVEL_LAYER_CLOUDS2], game);
 };
 
-level_update :: fn (self: *Level) {
-    entity_update(self.player);
+level_update :: fn (self: *Level, dt: f32) {
+    loop i := 0; i < self.entities.len; i += 1 {
+        entity_update(self.entities[i], dt);
+    }
 
     loop i := 0; i < self.layers.len; i += 1 {
-        level_layer_update(self.layers[i]);
+        level_layer_update(self.layers[i], dt);
     }
 };
 
 level_handle_input :: fn (self: *Level) {
-    if SDL_KeyPressed(SDL_Scancode.A) {
-        self.player.speed.x -= 0.2f;
-    }
-
-    if SDL_KeyPressed(SDL_Scancode.S) {
-        self.player.speed.y += 0.2f;
-    }
-
-    if SDL_KeyPressed(SDL_Scancode.D) {
-        self.player.speed.x += 0.2f;
-    }
-
-    if SDL_KeyPressed(SDL_Scancode.W) {
-        self.player.speed.y -= 0.2f;
+    loop i := 0; i < self.entities.len; i += 1 {
+        entity_handle_input(self.entities[i]);
     }
 };
 
@@ -94,7 +94,7 @@ level_layer_delete :: fn (self: *LevelLayer) {
 };
 
 level_layer_render :: fn (self: *LevelLayer, game: *Game) {
-    ipos := cast(s32) self.x_position;
+    ipos := cast(s32) roundf(self.x_position);
 
     dst_rect := {:SDL_Rect:
         ipos,
@@ -109,7 +109,7 @@ level_layer_render :: fn (self: *LevelLayer, game: *Game) {
     SDL_RenderCopy(game.renderer, self.texture, null, &dst_rect);
 };
 
-level_layer_update :: fn (self: *LevelLayer) {
-    self.x_position += self.x_speed;
+level_layer_update :: fn (self: *LevelLayer, dt: f32) {
+    self.x_position += self.x_speed * dt;
     if self.x_position < -(cast(f32) ScreenWidth) { self.x_position = 0.f; }
 };

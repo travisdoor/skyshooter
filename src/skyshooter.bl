@@ -6,9 +6,9 @@
 #load "entity.bl"
 
 Title           := "Sky Shooter!!!";
-ScreenWidth     :: 1920;
-ScreenHeight    :: 1080;
-Fullscreen      :: true;
+ScreenWidth     :: 1024;
+ScreenHeight    :: 768;
+Fullscreen      :: false;
 FPS             :: 60;
 FrameDuration   :: 1000 / FPS;
 MaxTimePerFrame :: 200;

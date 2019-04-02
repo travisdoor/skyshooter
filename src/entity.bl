@@ -133,7 +133,8 @@ player_handle_input :: fn (self: *Player) {
 
 // ENEMY
 Enemy :: struct {
-    base: Entity
+    base: Entity,
+    floating_offset: f32
 };
 
 enemy_new :: fn (game: *Game, x: f32, y: f32, speed: f32) *Entity {
@@ -151,6 +152,8 @@ enemy_new :: fn (game: *Game, x: f32, y: f32, speed: f32) *Entity {
         &size,
         speed);
 
+    self.floating_offset = rand_range(0.f, 10.f);
+
     return cast(*Entity) self;
 };
 
@@ -158,8 +161,8 @@ enemy_terminate :: fn (self: *Enemy) {
 };
 
 enemy_update :: fn (self: *Enemy, dt: f32) {
-    self.base.speed.y = sinf(cast(f32) SDL_GetTicks() * 0.001f) * 0.05f;
-    self.base.speed.x = -self.base.max_speed * dt;
+    self.base.speed.y = sinf(cast(f32) SDL_GetTicks() * 0.001f + self.floating_offset) * 0.05f;
+    self.base.speed.x = -self.base.max_speed;
 
     if self.base.position.x < -self.base.size.x {
         self.base.position.x = cast(f32) ScreenWidth; 

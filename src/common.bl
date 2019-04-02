@@ -13,3 +13,9 @@ load_surface :: fn (filepath: string) *SDL_Surface {
 get_ticks_ms :: fn () f64 {
     return cast(f64) SDL_GetTicks();
 };
+
+rand_range :: fn (from: f32, to: f32) f32 {
+  frand := cast(f64) rand();
+  r := cast(f32)(frand / cast(f64) RAND_MAX);
+  return lerp(from, to, r);
+};

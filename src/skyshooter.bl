@@ -33,6 +33,7 @@ main :: fn () s32 {
 };
 
 init :: fn (game: *Game) {
+    srand(666);
     print("Initialize SDL.\n");
 
     if SDL_Init(SDL_INIT_VIDEO) != 0 {
@@ -61,8 +62,8 @@ init :: fn (game: *Game) {
     }
 
     game.renderer = SDL_CreateRenderer(game.window, -1,
-                                       SDL_RENDERER_ACCELERATED
-                                       | SDL_RENDERER_PRESENTVSYNC);
+                                       SDL_RENDERER_ACCELERATED);
+                                       //| SDL_RENDERER_PRESENTVSYNC);
 
     if game.renderer == null {
         print("Cannot create renderer.\n");

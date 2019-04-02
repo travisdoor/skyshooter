@@ -7,7 +7,7 @@ PLAYER_ID           :: cast(usize) 0;
 
 Level :: struct {
     layers: [5]*LevelLayer,
-    entities: [6]*Entity
+    entities: [16]*Entity
 };
 
 LevelLayer :: struct {
@@ -27,11 +27,14 @@ level_new :: fn (game: *Game) *Level {
 
     // init player
     self.entities[PLAYER_ID] = player_new(game);
-    self.entities[1] = enemy_new(game, 600.f, 20.f, 0.01f);
-    self.entities[2] = enemy_new(game, 800.f, 500.f, 0.008f);
-    self.entities[3] = enemy_new(game, 10.f, 830.f, 0.005f);
-    self.entities[4] = enemy_new(game, 1200.f, 100.f, 0.009f);
-    self.entities[5] = enemy_new(game, 900.f, 760.f, 0.003f);
+
+    loop i := 1; i < self.entities.len; i += 1 {
+        x := rand_range(0.f, cast(f32) ScreenWidth);
+        y := rand_range(0.f, cast(f32) ScreenHeight);
+        speed  := rand_range(0.05f, 0.2f);
+
+        self.entities[i] = enemy_new(game, x, y, speed);
+    }
 
     return self;
 };

@@ -79,8 +79,8 @@ game_init :: fn (game: *Game) {
     game.level = level_new(game);
 
     // Animation test
-    frame_size := {:iVec2: 128, 128};
-    game.test_anim = anim_new(game, "data/explosion.png", &frame_size);
+    frames := {:iVec2: 8, 6};
+    game.test_anim = anim_new(game, "data/explosion.png", &frames);
 };
 
 game_terminate :: fn (game: *Game) {
@@ -135,4 +135,5 @@ game_render :: fn (game: *Game) {
 
 game_update :: fn (game: *Game, dt: f32) {
     level_update(game.level, dt);
+    anim_update(game.test_anim, dt);
 };

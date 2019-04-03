@@ -1,0 +1,40 @@
+Animation :: struct {
+    texture: *SDL_Texture,
+    frame_rect: SDL_Rect,
+    position: Vec2,
+    frame_count: s32,
+    current_frame: s32,
+};
+
+anim_new :: fn (game: *Game,
+                filepath: string, 
+                frame_size: *iVec2) *Animation {
+
+    self := cast(*Animation) malloc(sizeof(Animation));
+
+    surface := load_surface(filepath);
+    self.texture = SDL_CreateTextureFromSurface(game.renderer, surface);
+    SDL_FreeSurface(surface);
+
+    self.current_frame = 0;
+    self.position.x = 200.f;
+    self.position.y = 200.f;
+                    
+    return self;
+};
+
+anim_delete :: fn (self: *Animation) {
+    SDL_DestroyTexture(self.texture);
+    free(cast(*u8) self);
+};
+
+anim_render :: fn (self: *Animation, game: *Game) {
+    dst_rect := {:SDL_Rect:
+        cast(s32) self.position.x,
+        cast(s32) self.position.y,
+        512,
+        512,
+    };
+
+    SDL_RenderCopy(game.renderer, self.texture, null, &dst_rect);
+};

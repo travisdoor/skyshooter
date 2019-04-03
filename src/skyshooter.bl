@@ -4,6 +4,7 @@
 #load "level.bl"
 #load "common.bl"
 #load "entity.bl"
+#load "animation.bl"
 
 Title           := "Sky Shooter!!!";
 ScreenWidth     :: 1024;
@@ -13,26 +14,27 @@ FPS             :: 60;
 FrameDuration   :: 1000 / FPS;
 MaxTimePerFrame :: 200;
 
-
 Game :: struct {
     window: *SDL_Window,
     renderer: *SDL_Renderer,
     will_quit: bool,
 
-    level: *Level
+    level: *Level,
+
+    test_anim: *Animation
 };
 
 main :: fn () s32 {
     game: Game;
 
-    init(&game);
+    game_init(&game);
     game_loop(&game);
-    terminate(&game);
+    game_terminate(&game);
 
     return 0;
 };
 
-init :: fn (game: *Game) {
+game_init :: fn (game: *Game) {
     srand(666);
     print("Initialize SDL.\n");
 
@@ -75,9 +77,14 @@ init :: fn (game: *Game) {
 
     // init level
     game.level = level_new(game);
+
+    // Animation test
+    frame_size := {:iVec2: 128, 128};
+    game.test_anim = anim_new(game, "data/explosion.png", &frame_size);
 };
 
-terminate :: fn (game: *Game) {
+game_terminate :: fn (game: *Game) {
+    anim_delete(game.test_anim);
     level_delete(game.level);
     SDL_DestroyRenderer(game.renderer);
     SDL_DestroyWindow(game.window);
@@ -92,15 +99,15 @@ game_loop :: fn (game: *Game) {
         current := SDL_GetTicks();
         dt := cast(f32) (current - last);
 
-        handle_input(game);
-        update(game, dt);
-        render(game);
+        game_handle_input(game);
+        game_update(game, dt);
+        game_render(game);
 
         last = current;
     }
 };
 
-handle_input :: fn(game: *Game) {
+game_handle_input :: fn(game: *Game) {
     event := {:SDL_Event: 0};
 
     level_handle_input(game.level);
@@ -116,14 +123,16 @@ handle_input :: fn(game: *Game) {
     }
 };
 
-render :: fn (game: *Game) {
+game_render :: fn (game: *Game) {
     SDL_RenderClear(game.renderer);
 
     level_render(game.level, game);
 
+    anim_render(game.test_anim, game);
+
     SDL_RenderPresent(game.renderer);
 };
 
-update :: fn (game: *Game, dt: f32) {
+game_update :: fn (game: *Game, dt: f32) {
     level_update(game.level, dt);
 };

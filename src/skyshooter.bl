@@ -5,6 +5,7 @@
 #load "common.bl"
 #load "entity.bl"
 #load "animation.bl"
+#load "texture_pool.bl"
 
 Title           := "Sky Shooter!!!";
 ScreenWidth     :: 1024;
@@ -20,8 +21,6 @@ Game :: struct {
     will_quit: bool,
 
     level: *Level,
-
-    test_anim: *Animation
 };
 
 main :: fn () s32 {
@@ -75,17 +74,16 @@ game_init :: fn (game: *Game) {
     SDL_SetRenderDrawColor(game.renderer, 0, 0, 0, 255);
     game.will_quit = false;
 
+    // init texture pool
+    texture_pool_init(game.renderer);
+
     // init level
     game.level = level_new(game);
-
-    // Animation test
-    frames := {:iVec2: 8, 6};
-    game.test_anim = anim_new(game, "data/explosion.png", &frames);
 };
 
 game_terminate :: fn (game: *Game) {
-    anim_delete(game.test_anim);
     level_delete(game.level);
+    texture_pool_terminate();
     SDL_DestroyRenderer(game.renderer);
     SDL_DestroyWindow(game.window);
     SDL_Quit();
@@ -118,6 +116,8 @@ game_handle_input :: fn(game: *Game) {
         } else if event.type == SDL_EventType.KEYDOWN {
             if (cast(*SDL_KeyboardEvent) &event).keysym == SDL_Scancode.ESCAPE {
                 game.will_quit = true;    
+            } else if (cast(*SDL_KeyboardEvent) &event).keysym == SDL_Scancode.SPACE {
+                level_kill_all(game.level);
             }
         }
     }
@@ -128,12 +128,9 @@ game_render :: fn (game: *Game) {
 
     level_render(game.level, game);
 
-    anim_render(game.test_anim, game);
-
     SDL_RenderPresent(game.renderer);
 };
 
 game_update :: fn (game: *Game, dt: f32) {
     level_update(game.level, dt);
-    anim_update(game.test_anim, dt);
 };

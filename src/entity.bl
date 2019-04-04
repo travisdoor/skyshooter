@@ -14,20 +14,18 @@ Entity :: struct {
     speed: Vec2,
     dir: Vec2,
     max_speed: f32,
+    alive: bool
 };
 
 entity_init :: fn (self: *Entity,
                    game: *Game,
                    kind: EntityKind,
-                   filepath: string,
+                   texture_id: TextureId,
                    position: *Vec2,
                    size: *Vec2,
                    max_speed: f32) {
 
-    surface := load_surface(filepath);
-    self.texture = SDL_CreateTextureFromSurface(game.renderer, surface);
-    SDL_FreeSurface(surface);
-
+    self.texture = texture_pool_get(texture_id);
     self.kind = kind;
     self.position = ^position;
     self.size = ^size;
@@ -36,11 +34,15 @@ entity_init :: fn (self: *Entity,
     self.dir.x = 0.f;
     self.dir.y = 0.f;
     self.max_speed = max_speed;
+    self.alive = true;
+
+    frames := {:iVec2: 8, 6};
+    self.destroy_anim = anim_new(game, TextureId.Explosion, &frames);
 };
 
 entity_delete :: fn (self: *Entity) {
-    SDL_DestroyTexture(self.texture);
-
+    anim_delete(self.destroy_anim);
+    
     if self.kind == EntityKind.Player {
         player_terminate(cast(*Player) self);
     } else if self.kind == EntityKind.Enemy {
@@ -52,7 +54,19 @@ entity_delete :: fn (self: *Entity) {
     free(cast(*u8) self);
 };
 
-entity_render :: fn (self: *Entity, game: *Game) {
+entity_kill :: fn (self: *Entity) {
+    self.alive = false;
+    tmp := self.position;
+    anim_play_on_position(self.destroy_anim, &tmp);
+};
+
+entity_render :: fn (self: *Entity, game: *Game) { 
+    anim_render(self.destroy_anim, game);
+
+    if !self.alive {
+        return;
+    }     
+
     dst_rect := {:SDL_Rect:
         cast(s32) self.position.x,
         cast(s32) self.position.y,
@@ -64,6 +78,12 @@ entity_render :: fn (self: *Entity, game: *Game) {
 };
 
 entity_update :: fn (self: *Entity, dt: f32) {
+    anim_update(self.destroy_anim, dt);
+
+    if !self.alive {
+        return;
+    }     
+
     if self.kind == EntityKind.Player {
         player_update(cast(*Player) self, dt);
     } else if self.kind == EntityKind.Enemy {
@@ -97,7 +117,7 @@ player_new :: fn (game: *Game) *Entity {
         cast(*Entity) self,
         game,
         EntityKind.Player,
-        "data/player.png",
+        TextureId.Player,
         &initial_position,
         &size,
         0.2f);
@@ -147,7 +167,7 @@ enemy_new :: fn (game: *Game, x: f32, y: f32, speed: f32) *Entity {
         cast(*Entity) self,
         game,
         EntityKind.Enemy,
-        "data/balloon.png",
+        TextureId.Balloon,
         &initial_position,
         &size,
         speed);

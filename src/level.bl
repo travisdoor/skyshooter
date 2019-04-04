@@ -19,11 +19,11 @@ LevelLayer :: struct {
 level_new :: fn (game: *Game) *Level {
     self := cast(*Level) malloc(sizeof(Level));
 
-    self.layers[LEVEL_LAYER_SKY] = level_layer_new(game, "data/sky.png", 0.f);
-    self.layers[LEVEL_LAYER_HILLS1] = level_layer_new(game, "data/rocks_1.png", -0.05f);
-    self.layers[LEVEL_LAYER_CLOUDS1] = level_layer_new(game, "data/clouds_2.png", -0.07f);
-    self.layers[LEVEL_LAYER_HILLS2] = level_layer_new(game, "data/rocks_2.png", -0.09f);
-    self.layers[LEVEL_LAYER_CLOUDS2] = level_layer_new(game, "data/clouds_1.png", -0.1f);
+    self.layers[LEVEL_LAYER_SKY] = level_layer_new(game, TextureId.LevelSky, 0.f);
+    self.layers[LEVEL_LAYER_HILLS1] = level_layer_new(game, TextureId.LevelHills1, -0.05f);
+    self.layers[LEVEL_LAYER_CLOUDS1] = level_layer_new(game, TextureId.LevelClouds1, -0.07f);
+    self.layers[LEVEL_LAYER_HILLS2] = level_layer_new(game, TextureId.LevelHills2, -0.09f);
+    self.layers[LEVEL_LAYER_CLOUDS2] = level_layer_new(game, TextureId.LevelClouds2, -0.1f);
 
     // init player
     self.entities[PLAYER_ID] = player_new(game);
@@ -80,11 +80,15 @@ level_handle_input :: fn (self: *Level) {
     }
 };
 
-level_layer_new :: fn (game: *Game, filename: string, x_speed: f32) *LevelLayer {
+level_kill_all :: fn (self: *Level) {
+    loop i := 0; i < self.entities.len; i += 1 {
+        entity_kill(self.entities[i]);
+    }
+};
+
+level_layer_new :: fn (game: *Game, texture_id: TextureId, x_speed: f32) *LevelLayer {
     self := cast(*LevelLayer) malloc(sizeof(LevelLayer)); 
-    surface := load_surface(filename);
-    self.texture = SDL_CreateTextureFromSurface(game.renderer, surface);
-    SDL_FreeSurface(surface);
+    self.texture = texture_pool_get(texture_id);
 
     self.x_position = 0.f;
     self.x_speed = x_speed;
@@ -92,7 +96,6 @@ level_layer_new :: fn (game: *Game, filename: string, x_speed: f32) *LevelLayer 
 };
 
 level_layer_delete :: fn (self: *LevelLayer) {
-    SDL_DestroyTexture(self.texture);
     free(cast(*u8) self);
 };
 

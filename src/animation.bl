@@ -7,18 +7,17 @@ Animation :: struct {
     current_frame: s32,
     duration: f32,
     frame_duration: f32,
-    time_from_last_frame: f32
+    time_from_last_frame: f32,
+    running: bool,
 };
 
 anim_new :: fn (game: *Game,
-                filepath: string, 
+                texture_id: TextureId, 
                 frames: *iVec2) *Animation {
 
     self := cast(*Animation) malloc(sizeof(Animation));
 
-    surface := load_surface(filepath);
-    self.texture = SDL_CreateTextureFromSurface(game.renderer, surface);
-    SDL_FreeSurface(surface);
+    self.texture = texture_pool_get(texture_id);
 
     {
         w : s32;
@@ -27,18 +26,17 @@ anim_new :: fn (game: *Game,
 
         self.frame_size.x = w / frames.x;
         self.frame_size.y = h / frames.y;
-
-        print("frame size: [%, %]\n", self.frame_size.x, self.frame_size.y);
     }
 
     self.frames = ^frames;
     self.frame_count = frames.x * frames.y;
     self.current_frame = 0;
+    self.running = false;
 
     self.position.x = 200.f;
     self.position.y = 200.f;
 
-    self.duration = 3000.f;
+    self.duration = 800.f;
     self.frame_duration = self.duration / cast(f32) self.frame_count;
     self.time_from_last_frame = 0.f;
                     
@@ -46,21 +44,26 @@ anim_new :: fn (game: *Game,
 };
 
 anim_delete :: fn (self: *Animation) {
-    SDL_DestroyTexture(self.texture);
     free(cast(*u8) self);
 };
 
 anim_update :: fn (self: *Animation, dt: f32) {
+    if !self.running { return; }
     self.time_from_last_frame += dt;
 
     if self.time_from_last_frame > self.frame_duration {
         self.time_from_last_frame = 0.f;
         self.current_frame += 1;
-        if self.current_frame > self.frame_count { self.current_frame = 0; }
+
+        if self.current_frame > self.frame_count {
+            self.current_frame = 0;
+            self.running = false;
+        }
     }
 };
 
 anim_render :: fn (self: *Animation, game: *Game) {
+    if !self.running { return; }
     src_rect : SDL_Rect;
     anim_set_src_frame(self, &src_rect);
 
@@ -74,10 +77,18 @@ anim_render :: fn (self: *Animation, game: *Game) {
     SDL_RenderCopy(game.renderer, self.texture, &src_rect, &dst_rect);
 };
 
-anim_set_src_frame :: fn (self: *Animation, frame: *SDL_Rect) {
-    ix := self.current_frame / self.frames.x;
-    iy := self.current_frame % self.frames.y;
+anim_play :: fn (self: *Animation) {
+    self.running = true;
+};
 
+anim_play_on_position :: fn (self: *Animation, position: *Vec2) {
+    self.running = true;
+    self.position = ^position;
+};
+
+anim_set_src_frame :: fn (self: *Animation, frame: *SDL_Rect) {
+    ix := self.current_frame % self.frames.x;
+    iy := (self.current_frame / self.frames.x) % self.frames.y;
 
     frame.x = ix * self.frame_size.x;
     frame.y = iy * self.frame_size.y;

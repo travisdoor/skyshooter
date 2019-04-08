@@ -20,21 +20,18 @@ anim_new :: fn (game: *Game,
     self.texture = texture_pool_get(texture_id);
 
     {
-        w : s32;
-        h : s32;
-        SDL_QueryTexture(self.texture, null, null, &w, &h);
+        SDL_QueryTexture(self.texture, null, null, &self.frame_size.x, &self.frame_size.y);
 
-        self.frame_size.x = w / frames.x;
-        self.frame_size.y = h / frames.y;
+        self.frame_size.x /= frames.x;
+        self.frame_size.y /= frames.y;
     }
 
     self.frames = ^frames;
     self.frame_count = frames.x * frames.y;
     self.current_frame = 0;
     self.running = false;
-
-    self.position.x = 200.f;
-    self.position.y = 200.f;
+    self.position.x = 0.f;
+    self.position.y = 0.f;
 
     self.duration = 800.f;
     self.frame_duration = self.duration / cast(f32) self.frame_count;

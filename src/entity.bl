@@ -57,6 +57,8 @@ entity_delete :: fn (self: *Entity) {
 entity_kill :: fn (self: *Entity) {
     self.alive = false;
     tmp := self.position;
+    tmp.x -= self.size.x / 2.f;
+    tmp.y -= self.size.y / 2.f;
     anim_play_on_position(self.destroy_anim, &tmp);
 };
 

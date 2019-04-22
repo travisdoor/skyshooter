@@ -4,6 +4,8 @@
 #load "level.bl"
 #load "common.bl"
 #load "entity.bl"
+#load "player.bl"
+#load "enemy.bl"
 #load "animation.bl"
 #load "texture_pool.bl"
 
@@ -117,7 +119,7 @@ game_handle_input :: fn(game: *Game) {
             if (cast(*SDL_KeyboardEvent) &event).keysym == SDL_Scancode.ESCAPE {
                 game.will_quit = true;    
             } else if (cast(*SDL_KeyboardEvent) &event).keysym == SDL_Scancode.SPACE {
-                level_kill_all(game.level);
+
             }
         }
     }

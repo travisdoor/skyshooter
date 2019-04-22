@@ -7,6 +7,7 @@ EntityKind :: enum u8 {
 
 Entity :: struct {
     kind: EntityKind,
+    id: s32,
     texture: *SDL_Texture,
     position: Vec2,
     size: Vec2,
@@ -14,12 +15,18 @@ Entity :: struct {
     speed: Vec2,
     dir: Vec2,
     max_speed: f32,
-    alive: bool
+    is_alive: bool,
+
+    // virtual table
+    f_update: *fn (*u8, f32),
+    f_dtor: *fn (*u8),
+    f_on_colide : *fn (*u8),
 };
 
 entity_init :: fn (self: *Entity,
                    game: *Game,
                    kind: EntityKind,
+                   id: s32,
                    texture_id: TextureId,
                    position: *Vec2,
                    size: *Vec2,
@@ -27,6 +34,7 @@ entity_init :: fn (self: *Entity,
 
     self.texture = texture_pool_get(texture_id);
     self.kind = kind;
+    self.id = id;
     self.position = ^position;
     self.size = ^size;
     self.speed.x = 0.f;
@@ -34,7 +42,11 @@ entity_init :: fn (self: *Entity,
     self.dir.x = 0.f;
     self.dir.y = 0.f;
     self.max_speed = max_speed;
-    self.alive = true;
+    self.is_alive = true;
+
+    self.f_dtor = null;
+    self.f_update = null;
+    self.f_on_colide = null;
 
     frames := {:iVec2: 8, 6};
     self.destroy_anim = anim_new(game, TextureId.Explosion, &frames);
@@ -42,20 +54,16 @@ entity_init :: fn (self: *Entity,
 
 entity_delete :: fn (self: *Entity) {
     anim_delete(self.destroy_anim);
-    
-    if self.kind == EntityKind.Player {
-        player_terminate(cast(*Player) self);
-    } else if self.kind == EntityKind.Enemy {
-        enemy_terminate(cast(*Enemy) self);
-    } else {
-        abort();
+
+    if self.f_dtor != null {
+        self.f_dtor(cast(*u8) self);
     }
     
     free(cast(*u8) self);
 };
 
 entity_kill :: fn (self: *Entity) {
-    self.alive = false;
+    self.is_alive = false;
     tmp := self.position;
     tmp.x -= self.size.x / 2.f;
     tmp.y -= self.size.y / 2.f;
@@ -65,9 +73,7 @@ entity_kill :: fn (self: *Entity) {
 entity_render :: fn (self: *Entity, game: *Game) { 
     anim_render(self.destroy_anim, game);
 
-    if !self.alive {
-        return;
-    }     
+    if !self.is_alive { return; }     
 
     dst_rect := {:SDL_Rect:
         cast(s32) self.position.x,
@@ -82,111 +88,41 @@ entity_render :: fn (self: *Entity, game: *Game) {
 entity_update :: fn (self: *Entity, dt: f32) {
     anim_update(self.destroy_anim, dt);
 
-    if !self.alive {
+    if !self.is_alive {
         return;
     }     
 
-    if self.kind == EntityKind.Player {
-        player_update(cast(*Player) self, dt);
-    } else if self.kind == EntityKind.Enemy {
-        enemy_update(cast(*Enemy) self, dt);
-    } else {
-        abort();
+    if self.f_update != null {
+        self.f_update(cast(*u8) self, dt);
     }
 
     self.position.x += self.speed.x * dt;
     self.position.y += self.speed.y * dt;
 };
 
-entity_handle_input :: fn (self: *Entity) {
-    if self.kind == EntityKind.Player {
-        player_handle_input(cast(*Player) self);
-    }
+entity_does_colide :: fn (self: *Entity, other: *Entity) bool {
+    leftA := self.position.x;
+    rightA := self.position.x + self.size.x;
+    topA := self.position.y;
+    bottomA := self.position.y + self.size.y;
+
+    leftB := other.position.x;
+    rightB := other.position.x + other.size.x;
+    topB := other.position.y;
+    bottomB := other.position.y + other.size.y;
+
+    if bottomA < topB { return false; }
+    if topA > bottomB { return false; }
+    if rightA < leftB { return false; }
+    if leftA > rightB { return false; }
+
+    return true;
 };
 
-// PLAYER
-Player :: struct {
-    base: Entity
-};
+entity_on_colide :: fn (self: *Entity) {
+    entity_kill(self);
 
-player_new :: fn (game: *Game) *Entity {
-    self := cast(*Player) malloc(sizeof(Player));
-
-    initial_position := {:Vec2: 50.f, 200.f};
-    size := {:Vec2: 100.f, 43.f};
-
-    entity_init(
-        cast(*Entity) self,
-        game,
-        EntityKind.Player,
-        TextureId.Player,
-        &initial_position,
-        &size,
-        0.2f);
-
-    return cast(*Entity) self;
-};
-
-player_terminate :: fn (self: *Player) {
-};
-
-player_update :: fn (self: *Player, dt: f32) {
-    self.base.speed.x = lerp(self.base.speed.x, self.base.dir.x * self.base.max_speed, dt * 0.005f);
-    self.base.speed.y = lerp(self.base.speed.y, self.base.dir.y * self.base.max_speed, dt * 0.005f);
-};
-
-player_handle_input :: fn (self: *Player) {
-    if SDL_KeyPressed(SDL_Scancode.A) || SDL_KeyPressed(SDL_Scancode.LEFT)  {
-        self.base.dir.x = -1.0f;
-    } else if SDL_KeyPressed(SDL_Scancode.D) || SDL_KeyPressed(SDL_Scancode.RIGHT) {
-        self.base.dir.x = 1.f;
-    } else {
-        self.base.dir.x = 0.f;
-    }
-
-    if SDL_KeyPressed(SDL_Scancode.S) || SDL_KeyPressed(SDL_Scancode.DOWN) {
-        self.base.dir.y = 1.f;
-    } else if SDL_KeyPressed(SDL_Scancode.W) || SDL_KeyPressed(SDL_Scancode.UP)  {
-        self.base.dir.y = -1.f;
-    } else {
-        self.base.dir.y = 0.f;
-    }
-};
-
-// ENEMY
-Enemy :: struct {
-    base: Entity,
-    floating_offset: f32
-};
-
-enemy_new :: fn (game: *Game, x: f32, y: f32, speed: f32) *Entity {
-    self := cast(*Enemy) malloc(sizeof(Enemy));
-
-    initial_position := {:Vec2: x, y};
-    size := {:Vec2: 60.f, 85.f};
-
-    entity_init(
-        cast(*Entity) self,
-        game,
-        EntityKind.Enemy,
-        TextureId.Balloon,
-        &initial_position,
-        &size,
-        speed);
-
-    self.floating_offset = rand_range(0.f, 10.f);
-
-    return cast(*Entity) self;
-};
-
-enemy_terminate :: fn (self: *Enemy) {
-};
-
-enemy_update :: fn (self: *Enemy, dt: f32) {
-    self.base.speed.y = sinf(cast(f32) SDL_GetTicks() * 0.001f + self.floating_offset) * 0.05f;
-    self.base.speed.x = -self.base.max_speed;
-
-    if self.base.position.x < -self.base.size.x {
-        self.base.position.x = cast(f32) ScreenWidth; 
+    if self.f_on_colide != null {
+        self.f_on_colide(cast(*u8) self);
     }
 };

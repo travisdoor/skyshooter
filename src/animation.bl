@@ -52,7 +52,7 @@ anim_update :: fn (self: *Animation, dt: f32) {
         self.time_from_last_frame = 0.f;
         self.current_frame += 1;
 
-        if self.current_frame > self.frame_count {
+        if self.current_frame >= self.frame_count {
             self.current_frame = 0;
             self.running = false;
         }

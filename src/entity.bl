@@ -37,10 +37,8 @@ entity_init :: fn (self: *Entity,
     self.id = id;
     self.position = ^position;
     self.size = ^size;
-    self.speed.x = 0.f;
-    self.speed.y = 0.f;
-    self.dir.x = 0.f;
-    self.dir.y = 0.f;
+    self.speed = {:Vec2: 0};
+    self.dir = {:Vec2: 0};
     self.max_speed = max_speed;
     self.is_alive = true;
 

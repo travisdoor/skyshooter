@@ -30,8 +30,7 @@ anim_new :: fn (game: *Game,
     self.frame_count = frames.x * frames.y;
     self.current_frame = 0;
     self.running = false;
-    self.position.x = 0.f;
-    self.position.y = 0.f;
+    self.position = {:Vec2: 0};
 
     self.duration = 800.f;
     self.frame_duration = self.duration / cast(f32) self.frame_count;

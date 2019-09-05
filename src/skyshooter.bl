@@ -1,5 +1,6 @@
 #load "std/core.bl"
 #load "std/math.bl"
+#load "std/print.bl"
 #load "sdl2/sdl2.bl"
 #load "level.bl"
 #load "common.bl"

@@ -114,7 +114,7 @@ level_layer_delete :: fn (self: *LevelLayer) {
 };
 
 level_layer_render :: fn (self: *LevelLayer, game: *Game) {
-    ipos := cast(s32) roundf(self.x_position);
+    ipos := cast(s32) self.x_position;
 
     dst_rect := {:SDL_Rect:
         ipos,

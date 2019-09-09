@@ -1,5 +1,3 @@
-#load "sdl2/sdl2_image.bl"
-
 load_surface :: fn (filepath: string) *SDL_Surface {
     surface := IMG_Load(filepath.ptr);
     if surface == null {
